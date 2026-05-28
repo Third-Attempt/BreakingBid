@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from database import get_session
 from models import Item, ItemStatus
 from schema import ItemCreate, ItemResponse
+from security import CurrentUser
 
 router = APIRouter()
 
@@ -22,8 +23,8 @@ def get_item(item_id: int, session: SessionDep):
     return item
 
 @router.post("/", response_model=ItemResponse, status_code=201)
-def create_item(data: ItemCreate, session: SessionDep):
-    item = Item(**data.model_dump(), status=ItemStatus.upcoming, seller_id=1)
+def create_item(seller: CurrentUser, data: ItemCreate, session: SessionDep):
+    item = Item(**data.model_dump(), status=ItemStatus.upcoming, seller_id=seller.id)
     session.add(item)
     session.commit()
     session.refresh(item)

@@ -5,6 +5,7 @@ from database import get_session
 from models import Bid, Item
 from schema import BidCreate, BidResponse
 from datetime import datetime, timezone
+from security import CurrentUser
 
 router = APIRouter()
 
@@ -23,12 +24,12 @@ def get_bid(item_id: int, bid_id: int, session: SessionDep):
     return bid
 
 @router.post("/", response_model=BidResponse, status_code=201)
-def create_bid(item_id: int, data: BidCreate, session: SessionDep):
+def create_bid(bidder: CurrentUser, item_id: int, data: BidCreate, session: SessionDep):
     item = session.get(Item, item_id)
     if not item:
         raise HTTPException(status_code=404, detail="Item Not Found")
     
-    bids = Bid(**data.model_dump(), bidder_id=1, item_id=item_id)
+    bids = Bid(**data.model_dump(), bidder_id=bidder.id, item_id=item_id)
     now = datetime.now(timezone.utc).replace(tzinfo=None)
     highest_bid = session.query(Bid).where(Bid.item_id==item_id).order_by(Bid.value.desc()).first()
 

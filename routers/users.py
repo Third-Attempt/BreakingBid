@@ -21,11 +21,3 @@ def get_user(user_id: int, session: SessionDep):
     if not user:
         raise HTTPException(status_code=404, detail="User Not Found")
     return user
-
-@router.post("/register", response_model=UserResponse, status_code=201)
-def create_user(data: UserCreate, session: SessionDep):
-    user = User(**data.model_dump(exclude={"password"}), password_hash=bcrypt.hash(data.password))
-    session.add(user)
-    session.commit()
-    session.refresh(user)
-    return user

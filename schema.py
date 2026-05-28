@@ -20,6 +20,10 @@ class UserCreate(BaseModel):
     email: str
     password: str
 
+class UserLogin(BaseModel):
+    username: str
+    password: str
+
 class UserResponse(ResModel):
     id: int
     username: str
