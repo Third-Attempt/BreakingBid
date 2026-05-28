@@ -4,7 +4,7 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from database import get_session
 from models import User
-from jose import jwt, JWTError
+import jwt
 from config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 from datetime import datetime, timedelta, timezone
 
@@ -26,7 +26,7 @@ def verify_token(token: str):
         if not user_id:
             raise HTTPException(status_code=401, detail="Invalid Token")
         return user_id    
-    except JWTError:
+    except jwt.PyJWTError:
         raise HTTPException(status_code=401, detail="Invalid Token")
 
 def get_current_user(token: tokenDep, session: sessionDep):
