@@ -37,6 +37,8 @@ def create_bid(bidder: CurrentUser, item_id: int, data: BidCreate, session: Sess
         raise HTTPException(status_code=400, detail="Auction hasn't Started")
     if now > item.end_time:
         raise HTTPException(status_code=400, detail="Auction has Ended")
+    if not highest_bid and bids.value <= item.base_price:
+        raise HTTPException(status_code=400, detail="Bid must exceed base price")
     if highest_bid and bids.value <= highest_bid.value:
         raise HTTPException(status_code=400, detail="Bid must exceed highest bid")
 

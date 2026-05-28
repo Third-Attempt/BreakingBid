@@ -3,8 +3,7 @@ from fastapi import  APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_session
 from models import User
-from schema import UserCreate, UserResponse
-from passlib.hash import bcrypt
+from schema import UserResponse
 
 router = APIRouter()
 

@@ -14,6 +14,8 @@ def get_session():
     session = Session()
     try:
         yield session
+    except:
+        session.rollback()
     finally:
         session.close()
 
