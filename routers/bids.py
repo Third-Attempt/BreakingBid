@@ -1,11 +1,12 @@
 from typing import Annotated
-from fastapi import  APIRouter, Depends, HTTPException
+from fastapi import  APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from sqlalchemy.orm import Session
 from database import get_session
 from models import Bid, Item
 from schema import BidCreate, BidResponse
 from datetime import datetime, timezone
-from security import CurrentUser
+from security import CurrentUser, verify_token
+from connections import manager
 
 router = APIRouter()
 
@@ -24,7 +25,7 @@ def get_bid(item_id: int, bid_id: int, session: SessionDep):
     return bid
 
 @router.post("/", response_model=BidResponse, status_code=201)
-def create_bid(bidder: CurrentUser, item_id: int, data: BidCreate, session: SessionDep):
+async def create_bid(bidder: CurrentUser, item_id: int, data: BidCreate, session: SessionDep):
     item = session.get(Item, item_id)
     if not item:
         raise HTTPException(status_code=404, detail="Item Not Found")
@@ -45,5 +46,29 @@ def create_bid(bidder: CurrentUser, item_id: int, data: BidCreate, session: Sess
     session.add(bids)
     session.commit()
     session.refresh(bids)
+
+    broadcast_data = {
+        "value": data.value,
+        "bidder_id": bidder.id,
+    }
+    await manager.broadcast(item_id, broadcast_data)
+
     return bids
+
+@router.websocket("/ws")
+async def broadcast_bid(item_id: int, websocket: WebSocket, token: str, session: SessionDep):
+    try:
+        user_id = verify_token(token)
+    except HTTPException:
+        await websocket.close(code=1008)
+        return
+    
+    await manager.connect(item_id, websocket)
+
+    try:
+        while True:
+            await websocket.receive_json()
+    except WebSocketDisconnect:
+        manager.disconnect(item_id, websocket)
+
 

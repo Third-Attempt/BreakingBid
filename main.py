@@ -1,6 +1,5 @@
 from fastapi import FastAPI
 from database import Base, engine
-from models import User, Item, Bid
 from routers import users, items, bids, auth
 
 Base.metadata.create_all(engine)
