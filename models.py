@@ -1,14 +1,7 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, DateTime, ForeignKey, Enum, func
+from sqlalchemy import String, DateTime, ForeignKey, func
 from database import Base
 from datetime import datetime
-import enum
-
-class ItemStatus(enum.Enum):
-    upcoming = "upcoming"
-    active = "active"
-    sold = "sold"
-    unsold = "unsold"
 
 class User(Base):
     __tablename__ = "users"
@@ -27,7 +20,6 @@ class Item(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(50))
     desc: Mapped[str | None] = mapped_column(String(300))
-    status: Mapped[ItemStatus] = mapped_column(Enum(ItemStatus), default=ItemStatus.upcoming)
     seller_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     base_price: Mapped[float]
     start_time: Mapped[datetime] = mapped_column(DateTime(timezone=True))

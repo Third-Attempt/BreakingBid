@@ -1,6 +1,5 @@
 from pydantic import BaseModel
 from datetime import datetime
-from models import ItemStatus
 
 class ResModel(BaseModel):
     class Config:
@@ -13,7 +12,6 @@ class UserData(ResModel):
 class ItemData(ResModel):
     id: int
     name: str
-    status: ItemStatus
 
 class UserCreate(BaseModel):
     username: str
@@ -40,9 +38,10 @@ class ItemResponse(ResModel):
     id: int
     name: str
     desc: str | None
-    status: ItemStatus
     seller: UserData
+    winner: UserData | None = None
     base_price: float
+    final_price: float | None = None
     start_time: datetime
     end_time: datetime
 

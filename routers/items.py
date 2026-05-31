@@ -2,9 +2,10 @@ from typing import Annotated
 from fastapi import  APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_session
-from models import Item, ItemStatus
+from models import Item, Bid
 from schema import ItemCreate, ItemResponse
 from security import CurrentUser
+from datetime import datetime, timezone
 
 router = APIRouter()
 
@@ -20,11 +21,17 @@ def get_item(item_id: int, session: SessionDep):
     item = session.get(Item, item_id)
     if not item:
         raise HTTPException(status_code=404, detail="Item Not Found")
-    return item
+    highest_bid = session.query(Bid).where(Bid.item_id==item_id).order_by(Bid.value.desc()).first()
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    response = ItemResponse.model_validate(item)
+        
+    if highest_bid and now > item.end_time:
+        response = ItemResponse(**response.model_dump(), winner=highest_bid.bidder, final_price=highest_bid.value) 
+    return response
 
 @router.post("/", response_model=ItemResponse, status_code=201)
 def create_item(seller: CurrentUser, data: ItemCreate, session: SessionDep):
-    item = Item(**data.model_dump(), status=ItemStatus.upcoming, seller_id=seller.id)
+    item = Item(**data.model_dump(), seller_id=seller.id)
     session.add(item)
     session.commit()
     session.refresh(item)
