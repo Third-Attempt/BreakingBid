@@ -7,6 +7,7 @@ from schema import BidCreate, BidResponse
 from datetime import datetime, timezone
 from security import CurrentUser, verify_token
 from connections import manager
+from math import ceil
 
 router = APIRouter()
 
@@ -26,22 +27,26 @@ def get_bid(item_id: int, bid_id: int, session: SessionDep):
 
 @router.post("/", response_model=BidResponse, status_code=201)
 async def create_bid(bidder: CurrentUser, item_id: int, data: BidCreate, session: SessionDep):
-    item = session.get(Item, item_id)
+    item = session.query(Item).where(Item.id==item_id).with_for_update().first()
     if not item:
         raise HTTPException(status_code=404, detail="Item Not Found")
     
     bids = Bid(**data.model_dump(), bidder_id=bidder.id, item_id=item_id)
     now = datetime.now(timezone.utc).replace(tzinfo=None)
     highest_bid = session.query(Bid).where(Bid.item_id==item_id).order_by(Bid.value.desc()).first()
+    if highest_bid:
+        delta = ceil(highest_bid.value*0.0033)
+    else:
+        delta = ceil(item.base_price*0.0033)
 
     if now < item.start_time:
         raise HTTPException(status_code=400, detail="Auction hasn't Started")
     if now > item.end_time:
         raise HTTPException(status_code=400, detail="Auction has Ended")
-    if not highest_bid and bids.value <= item.base_price:
-        raise HTTPException(status_code=400, detail="Bid must exceed base price")
-    if highest_bid and bids.value <= highest_bid.value:
-        raise HTTPException(status_code=400, detail="Bid must exceed highest bid")
+    if not highest_bid and bids.value <= (item.base_price + delta):
+        raise HTTPException(status_code=400, detail=f"Base Price is {item.base_price} and next bid must exceed {item.base_price + delta}")
+    if highest_bid and bids.value <= (highest_bid.value + delta):
+        raise HTTPException(status_code=400, detail=f"highest bid is {highest_bid.value} and bid must exceed {highest_bid.value + delta}")
 
     session.add(bids)
     session.commit()
@@ -56,7 +61,7 @@ async def create_bid(bidder: CurrentUser, item_id: int, data: BidCreate, session
     return bids
 
 @router.websocket("/ws")
-async def broadcast_bid(item_id: int, websocket: WebSocket, token: str, session: SessionDep):
+async def broadcast_bid(item_id: int, websocket: WebSocket, token: str):
     try:
         user_id = verify_token(token)
     except HTTPException:
