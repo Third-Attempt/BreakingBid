@@ -5,7 +5,7 @@ from database import get_session
 from models import Item, Bid
 from schema import ItemCreate, ItemResponse
 from security import CurrentUser
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 router = APIRouter()
 
@@ -32,6 +32,9 @@ def get_item(item_id: int, session: SessionDep):
 @router.post("/", response_model=ItemResponse, status_code=201)
 def create_item(seller: CurrentUser, data: ItemCreate, session: SessionDep):
     item = Item(**data.model_dump(), seller_id=seller.id)
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    if item.end_time - timedelta(minutes=5) < max(now, item.start_time):
+        raise HTTPException(status_code=400, detail="Auction has to last atleast 5 minutes")
     session.add(item)
     session.commit()
     session.refresh(item)
