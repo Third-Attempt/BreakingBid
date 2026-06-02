@@ -53,9 +53,20 @@ async def create_bid(bidder: CurrentUser, item_id: int, data: BidCreate, session
     session.refresh(bids)
 
     broadcast_data = {
+        "type": "newbid",
+        "value": data.value,
+        "bidder_id": bidder.id,
+        "server_time": datetime.now(timezone.utc).isoformat()
+    }
+    notify_data = {
+        "type": "outbid",
         "value": data.value,
         "bidder_id": bidder.id,
     }
+
+    if highest_bid:
+        await manager.notify_outbid(highest_bid.bidder_id, item_id, notify_data)
+    
     await manager.broadcast(item_id, broadcast_data)
 
     return bids
@@ -68,12 +79,12 @@ async def broadcast_bid(item_id: int, websocket: WebSocket, token: str):
         await websocket.close(code=1008)
         return
     
-    await manager.connect(item_id, websocket)
+    await manager.connect(user_id, item_id, websocket)
 
     try:
         while True:
             await websocket.receive_json()
     except WebSocketDisconnect:
-        manager.disconnect(item_id, websocket)
+        manager.disconnect(user_id, item_id, websocket)
 
 

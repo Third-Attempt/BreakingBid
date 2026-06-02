@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from database import Base, engine
 from routers import users, items, bids, auth
+from datetime import datetime, timezone
 
 Base.metadata.create_all(engine)
 
@@ -15,3 +16,6 @@ app.include_router(auth.router, prefix="/auth", tags=["auth"])
 def root():
     return {"hello": "world"}
 
+@app.get('/server-time')
+def server_time():
+    return {"server_time": datetime.now(timezone.utc).isoformat()}
