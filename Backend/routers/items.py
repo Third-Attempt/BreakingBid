@@ -14,7 +14,17 @@ SessionDep = Annotated[Session, Depends(get_session)]
 @router.get("/", response_model=list[ItemResponse])
 def get_all_items(session: SessionDep, page: int = 1):
     items = session.query(Item).offset((page-1)*10).limit(10).all()
-    return items
+    response = []
+    for item in items:
+        highest_bid = session.query(Bid).where(Bid.item_id==item.id).order_by(Bid.value.desc()).first()
+        if highest_bid:
+            current_price = highest_bid.value
+        else:
+            current_price = item.base_price
+        data = ItemResponse.model_validate(item)
+        data.current_price = current_price
+        response.append(data)
+    return response
 
 @router.get("/{item_id}", response_model=ItemResponse)
 def get_item(item_id: int, session: SessionDep):

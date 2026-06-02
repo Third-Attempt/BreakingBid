@@ -41,6 +41,7 @@ class ItemResponse(ResModel):
     seller: UserData
     winner: UserData | None = None
     base_price: float
+    current_price: float | None = None
     final_price: float | None = None
     start_time: datetime
     end_time: datetime
