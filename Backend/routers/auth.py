@@ -1,6 +1,7 @@
 from typing import Annotated
 from fastapi import  APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from database import get_session
 from models import User
 from schema import UserCreate, UserLogin, UserResponse
@@ -15,10 +16,19 @@ SessionDep = Annotated[Session, Depends(get_session)]
 def create_user(user_data: UserCreate, session: SessionDep):
     password_hash = bcrypt.hashpw(user_data.password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
     user = User(**user_data.model_dump(exclude={"password"}), password_hash=password_hash)
-    session.add(user)
-    session.commit()
-    session.refresh(user)
+    try:
+        session.add(user)
+        session.commit()
+        session.refresh(user)
+    except IntegrityError:
+        session.rollback()
+        raise HTTPException(status_code=400, detail="Username or Email already exists")
     return user
+
+@router.get("/check-username/{username}")
+def check_username(username: str, session: SessionDep):
+    user = session.query(User).where(User.username == username).first()
+    return {"available": user is None}
 
 @router.post("/login", status_code=201)
 def login(user_data: UserLogin, session: SessionDep):
