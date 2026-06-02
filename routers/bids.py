@@ -1,5 +1,5 @@
 from typing import Annotated
-from fastapi import  APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import  APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, BackgroundTasks
 from sqlalchemy.orm import Session
 from database import get_session
 from models import Bid, Item
@@ -26,7 +26,7 @@ def get_bid(item_id: int, bid_id: int, session: SessionDep):
     return bid
 
 @router.post("/", response_model=BidResponse, status_code=201)
-async def create_bid(bidder: CurrentUser, item_id: int, data: BidCreate, session: SessionDep):
+def create_bid(bidder: CurrentUser, item_id: int, data: BidCreate, session: SessionDep, bg_tasks: BackgroundTasks):
     item = session.query(Item).where(Item.id==item_id).with_for_update().first()
     if not item:
         raise HTTPException(status_code=404, detail="Item Not Found")
@@ -64,10 +64,19 @@ async def create_bid(bidder: CurrentUser, item_id: int, data: BidCreate, session
         "bidder_id": bidder.id,
     }
 
-    if highest_bid:
-        await manager.notify_outbid(highest_bid.bidder_id, item_id, notify_data)
-    
-    await manager.broadcast(item_id, broadcast_data)
+    ''' 
+    My First "Aha Moment" in Software Development ~ Maybe small, but it counts
+
+    So basically, if we like send 20 requests to this function, 20 corouines are scheduled and it start by querying after using a connection from QueuePool, and then it runs till broadcast which is async so it waits and next coroutine picks up till 15.
+    Then when 16th coroutine starts it looks for a connection, but all are waiting, so the event loop is stuck there, since querying with psycopg2 is synchronous, it can't wait and go do next job, its stuck forever.
+    That is Event Loop Deadlock, so to fix it we can make use a asynchronous database driver which I will be doing on a later day, but for now I just made the whole thing synchronous and gave the asynchronous work to main event loop via BackgroundTasks
+    I have more but this is not a blog!
+    '''
+
+    if highest_bid and highest_bid.bidder_id!=bidder.id:
+        last_bid_user_id = highest_bid.bidder_id
+        bg_tasks.add_task(manager.notify_outbid, last_bid_user_id, item_id, notify_data)
+    bg_tasks.add_task(manager.broadcast, item_id, broadcast_data)
 
     return bids
 
