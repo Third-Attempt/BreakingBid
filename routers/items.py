@@ -22,7 +22,7 @@ def get_item(item_id: int, session: SessionDep):
     if not item:
         raise HTTPException(status_code=404, detail="Item Not Found")
     highest_bid = session.query(Bid).where(Bid.item_id==item_id).order_by(Bid.value.desc()).first()
-    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    now = datetime.now(timezone.utc)
     response = ItemResponse.model_validate(item)
         
     if highest_bid and now > item.end_time:
@@ -32,7 +32,7 @@ def get_item(item_id: int, session: SessionDep):
 @router.post("/", response_model=ItemResponse, status_code=201)
 def create_item(seller: CurrentUser, data: ItemCreate, session: SessionDep):
     item = Item(**data.model_dump(), seller_id=seller.id)
-    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    now = datetime.now(timezone.utc)
     if item.end_time - timedelta(minutes=5) < max(now, item.start_time):
         raise HTTPException(status_code=400, detail="Auction has to last atleast 5 minutes")
     session.add(item)

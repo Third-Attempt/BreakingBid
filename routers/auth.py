@@ -13,7 +13,7 @@ SessionDep = Annotated[Session, Depends(get_session)]
 
 @router.post("/register", response_model=UserResponse, status_code=201)
 def create_user(user_data: UserCreate, session: SessionDep):
-    password_hash = bcrypt.hashpw(user_data.password.encode("utf-8"), bcrypt.gensalt())
+    password_hash = bcrypt.hashpw(user_data.password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
     user = User(**user_data.model_dump(exclude={"password"}), password_hash=password_hash)
     session.add(user)
     session.commit()
@@ -26,7 +26,7 @@ def login(user_data: UserLogin, session: SessionDep):
 
     if not user:
         raise HTTPException(status_code=404, detail="User Not Found")
-    if not bcrypt.checkpw(user_data.password.encode("utf-8"), user.password_hash):
+    if not bcrypt.checkpw(user_data.password.encode("utf-8"), user.password_hash.encode("utf-8")):
         raise HTTPException(status_code=401, detail="Incorrect Password")
     
     token = create_token(user.id)

@@ -32,7 +32,7 @@ async def create_bid(bidder: CurrentUser, item_id: int, data: BidCreate, session
         raise HTTPException(status_code=404, detail="Item Not Found")
     
     bids = Bid(**data.model_dump(), bidder_id=bidder.id, item_id=item_id)
-    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    now = datetime.now(timezone.utc)
     highest_bid = session.query(Bid).where(Bid.item_id==item_id).order_by(Bid.value.desc()).first()
     if highest_bid:
         delta = ceil(highest_bid.value*0.0033)
