@@ -1,7 +1,7 @@
 from typing import Annotated
 from fastapi import  APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import or_
+from sqlalchemy import or_, func
 from database import get_session
 from models import Item, Bid
 from schema import ItemCreate, ItemResponse
@@ -13,30 +13,32 @@ router = APIRouter()
 SessionDep = Annotated[Session, Depends(get_session)]
 
 @router.get("/", response_model=list[ItemResponse])
-def get_all_items(session: SessionDep, page: int = 1, search : str = "", status: int = 0):
+def get_all_items(session: SessionDep, page: int = 1, search : str = "", status: int = 0, sort: bool = 0):
     now = datetime.now(timezone.utc)
+    query = session.query(Item, (func.coalesce(func.max(Bid.value), Item.base_price)).label("current_price")).outerjoin(Bid, Bid.item_id==Item.id).group_by(Item.id)
+    query = query.where(Item.name.ilike(f"%{search}%"))
+
+    if sort:
+        query = query.order_by(func.coalesce(func.max(Bid.value), Item.base_price).desc())
+
     # Ongoing
     if status==0:
-        items = session.query(Item).where(Item.name.ilike(f"%{search}%"), Item.start_time<now, Item.end_time>now).order_by(Item.id.desc()).offset((page-1)*10).limit(10).all()
+        query = query.where(Item.start_time<now, Item.end_time>now).order_by(Item.id.desc())
     # Upcoming
     elif status==1:
-        items = session.query(Item).where(Item.name.ilike(f"%{search}%"), Item.start_time>now).order_by(Item.start_time).offset((page-1)*10).limit(10).all()
+        query = query.where(Item.start_time>now).order_by(Item.start_time)
     # Finished
     elif status==2:
-        items = session.query(Item).where(Item.name.ilike(f"%{search}%"), Item.end_time<now).order_by(Item.end_time.desc()).offset((page-1)*10).limit(10).all()
-    # All time
-    else:
-        items = session.query(Item).where(Item.name.ilike(f"%{search}%")).order_by(Item.id.desc()).offset((page-1)*10).limit(10).all()
+        query = query.where(Item.end_time<now).order_by(Item.end_time.desc())
+
+    items = query.offset((page-1)*10).limit(10).all()
+
     response = []
-    for item in items:
-        highest_bid = session.query(Bid).where(Bid.item_id==item.id).order_by(Bid.value.desc()).first()
-        if highest_bid:
-            current_price = highest_bid.value
-        else:
-            current_price = item.base_price
+    for item, current_price in items:
         data = ItemResponse.model_validate(item)
         data.current_price = current_price
         response.append(data)
+
     return response
 
 @router.get("/{item_id}", response_model=ItemResponse)

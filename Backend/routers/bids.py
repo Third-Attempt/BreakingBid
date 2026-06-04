@@ -56,6 +56,7 @@ def create_bid(bidder: CurrentUser, item_id: int, data: BidCreate, session: Sess
         "type": "newbid",
         "value": data.value,
         "bidder_id": bidder.id,
+        "bidder_name": bidder.username,
         "server_time": datetime.now(timezone.utc).isoformat()
     }
     notify_data = {
