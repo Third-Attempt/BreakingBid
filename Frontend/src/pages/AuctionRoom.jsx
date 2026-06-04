@@ -77,6 +77,7 @@ export default function AuctionRoom() {
               id: Date.now(), // temporary UI id
               value: data.value,
               bidder_id: data.bidder_id,
+              username: data.bidder_name || data.username,
               created_at: data.server_time
             }, ...prev];
           });
@@ -161,69 +162,107 @@ export default function AuctionRoom() {
     }
   };
 
-  if (!item) return <div className="min-h-screen bg-[#0f172a] text-white flex items-center justify-center">Loading Room...</div>;
+  if (!item) {
+    return (
+      <div className="min-h-screen text-[#f4f4f5] font-sans p-8">
+        <header className="max-w-6xl mx-auto flex items-center justify-between mb-8 pb-6 border-b border-[var(--color-elite-border)] animate-pulse">
+          <div className="w-40 h-6 bg-[var(--color-elite-border)] rounded-md"></div>
+          <div className="w-24 h-6 bg-[var(--color-elite-border)] rounded-md"></div>
+        </header>
+        <main className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-6">
+            <div className="solid-panel p-8 animate-pulse h-64">
+              <div className="w-3/4 h-10 bg-[var(--color-elite-border)] rounded-md mb-4"></div>
+              <div className="w-full h-4 bg-[var(--color-elite-border)] rounded-md mb-2"></div>
+              <div className="w-5/6 h-4 bg-[var(--color-elite-border)] rounded-md mb-8"></div>
+              <div className="grid grid-cols-2 gap-6 pt-6 border-t border-[var(--color-elite-border)]">
+                <div>
+                  <div className="w-24 h-3 bg-[var(--color-elite-border)] rounded-md mb-2"></div>
+                  <div className="w-32 h-8 bg-[var(--color-elite-border)] rounded-md"></div>
+                </div>
+                <div>
+                  <div className="w-32 h-3 bg-[var(--color-elite-border)] rounded-md mb-2"></div>
+                  <div className="w-40 h-10 bg-[var(--color-elite-border)] rounded-md"></div>
+                </div>
+              </div>
+            </div>
+            <div className="glass-panel p-8 animate-pulse h-40 border border-[var(--color-elite-border)]"></div>
+          </div>
+          <div className="glass-panel p-6 h-[600px] animate-pulse">
+            <div className="w-32 h-6 bg-[var(--color-elite-border)] rounded-md mb-6"></div>
+            <div className="space-y-4">
+              <div className="w-full h-20 bg-[var(--color-elite-border)] rounded-xl"></div>
+              <div className="w-full h-20 bg-[var(--color-elite-border)] rounded-xl"></div>
+              <div className="w-full h-20 bg-[var(--color-elite-border)] rounded-xl"></div>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   const isEnded = timeLeft === 'Auction Ended';
 
   return (
-    <div className="min-h-screen bg-[#0f172a] text-white font-sans">
+    <div className="min-h-screen text-[#f4f4f5] font-sans pb-12">
       {/* Header */}
-      <header className="bg-slate-900/60 border-b border-slate-800 backdrop-blur-lg sticky top-0 z-50">
+      <header className="bg-[#000000]/40 border-b border-[var(--color-elite-border)] backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <button onClick={() => navigate('/dashboard')} className="flex items-center gap-2 text-slate-400 hover:text-amber-500 transition-colors">
+          <button onClick={() => navigate('/dashboard')} className="flex items-center gap-2 text-[#a1a1aa] hover:text-white transition-colors duration-300 font-medium">
             <ArrowLeft size={20} /> Back to Dashboard
           </button>
-          <div className="flex items-center gap-2 text-amber-500 font-mono font-medium text-lg tracking-wider">
+          <div className="flex items-center gap-2 text-[var(--color-elite-accent)] font-mono font-medium text-lg tracking-wider">
             <Clock size={20} /> {timeLeft}
           </div>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-6 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <main className="max-w-6xl mx-auto px-6 py-10 grid grid-cols-1 lg:grid-cols-3 gap-10">
         
         {/* Left Column: Item Details & Bidding */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-8">
-            <h1 className="text-4xl font-light mb-4">{item.name}</h1>
-            <p className="text-slate-400 text-lg leading-relaxed mb-8">{item.description}</p>
+        <div className="lg:col-span-2 space-y-8">
+          <div className="solid-panel p-10 relative overflow-hidden">
+
+            <h1 className="text-3xl md:text-4xl font-display font-medium mb-4 text-white tracking-tight">{item.name}</h1>
+            <p className="text-[#a1a1aa] text-base leading-relaxed mb-8">{item.description}</p>
             
-            <div className="grid grid-cols-2 gap-6 pt-6 border-t border-slate-800">
+            <div className="grid grid-cols-2 gap-8 pt-8 border-t border-[var(--color-elite-border)]">
               <div>
-                <p className="text-sm text-slate-500 uppercase tracking-widest mb-1">Starting Price</p>
-                <p className="text-2xl font-mono text-slate-300">${item.base_price}</p>
+                <p className="text-xs text-[#a1a1aa] uppercase tracking-widest font-semibold mb-2">Starting Price</p>
+                <p className="text-2xl font-mono text-[#f4f4f5] tracking-tight">${item.base_price}</p>
               </div>
               <div>
-                <p className="text-sm text-amber-500/70 uppercase tracking-widest mb-1 flex items-center gap-2">
+                <p className="text-xs text-[var(--color-elite-accent)] uppercase tracking-widest font-semibold mb-2 flex items-center gap-2">
                   <TrendingUp size={16} /> Current Highest Bid
                 </p>
-                <p className="text-4xl font-mono font-bold text-amber-500">${highestBid}</p>
+                <p className="text-4xl font-mono font-bold text-[var(--color-elite-accent)] tracking-tight">${highestBid}</p>
               </div>
             </div>
           </div>
 
-          {/* Bidding Terminal */}
-          <div className="bg-slate-900/60 border border-slate-700 shadow-[0_0_40px_rgba(0,0,0,0.5)] rounded-2xl p-8 relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-amber-500 to-transparent opacity-50"></div>
+          {/* Bidding Terminal (Sticky for easy access) */}
+          <div className="glass-panel p-8 relative overflow-hidden shadow-[0_0_50px_rgba(16,185,129,0.05)] sticky top-[100px] z-40">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[var(--color-elite-accent)] to-transparent opacity-50"></div>
             
-            <h3 className="text-xl font-medium mb-6 flex items-center gap-2">
-              <AlertCircle size={20} className="text-amber-500" /> Place Your Bid
+            <h3 className="text-2xl font-display font-medium mb-8 text-white flex items-center gap-3">
+              <AlertCircle size={24} className="text-[var(--color-elite-accent)]" /> Place Your Bid
             </h3>
             
             {isEnded ? (
-              <div className="text-center py-8 bg-slate-950 rounded-xl border border-slate-800">
+              <div className="text-center py-10 bg-[#000000]/40 rounded-xl border border-[var(--color-elite-border)]">
                 {item.winner ? (
                   <>
-                    <p className="text-amber-500 text-2xl font-bold mb-2 tracking-wide">🏆 Sold to {item.winner.username}!</p>
-                    <p className="text-slate-400 font-medium text-lg">Final Price: <span className="text-white font-mono font-bold">${item.final_price?.toFixed(2)}</span></p>
+                    <p className="text-[var(--color-elite-accent)] text-3xl font-display font-bold mb-3 tracking-wide">🏆 Sold to {item.winner.username}!</p>
+                    <p className="text-[#a1a1aa] font-medium text-lg">Final Price: <span className="text-white font-mono font-bold text-2xl ml-2">${item.final_price?.toFixed(2)}</span></p>
                   </>
                 ) : (
-                  <p className="text-slate-500 font-medium text-lg">This auction has concluded without a winner.</p>
+                  <p className="text-[#a1a1aa] font-medium text-lg">This auction has concluded without a winner.</p>
                 )}
               </div>
             ) : (
               <form onSubmit={handleBid} className="flex gap-4">
                 <div className="relative flex-1">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-mono">$</span>
+                  <span className="absolute left-6 top-1/2 -translate-y-1/2 text-[#a1a1aa] font-mono text-xl">$</span>
                   <input 
                     type="number" 
                     step="0.01"
@@ -233,20 +272,20 @@ export default function AuctionRoom() {
                     placeholder={`Min: ${minRequiredBid.toFixed(2)}`}
                     required
                     disabled={isSubmitting}
-                    className="w-full bg-slate-950 border border-slate-700 text-white pl-8 pr-4 py-4 rounded-xl font-mono text-lg focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all disabled:opacity-50"
+                    className="w-full bg-[#000000]/40 border border-[var(--color-elite-border)] text-white pl-12 pr-6 py-4 rounded-xl font-mono text-lg focus:outline-none focus:border-[var(--color-elite-accent)] focus:ring-1 focus:ring-[var(--color-elite-accent)]/50 transition-all disabled:opacity-50"
                   />
                 </div>
                 <button 
                   type="submit"
                   disabled={isSubmitting}
-                  className="bg-amber-500 hover:bg-amber-400 text-slate-900 font-semibold px-8 rounded-xl transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-[var(--color-elite-accent)] hover:bg-[var(--color-elite-accent-hover)] text-black font-bold px-8 rounded-xl transition-all duration-300 flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(16,185,129,0.2)] text-base"
                 >
-                  {isSubmitting ? 'Sending...' : 'Confirm'} <Send size={18} />
+                  {isSubmitting ? 'Sending...' : 'Confirm'} <Send size={20} />
                 </button>
               </form>
             )}
             {!isEnded && (
-              <p className="text-xs text-slate-500 mt-4 text-center">
+              <p className="text-xs text-[#a1a1aa] mt-5 text-center font-medium uppercase tracking-widest">
                 Bids are final. Minimum increment is 0.33% (${minDelta.toFixed(2)}).
               </p>
             )}
@@ -254,38 +293,45 @@ export default function AuctionRoom() {
         </div>
 
         {/* Right Column: Live Feed */}
-        <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 h-[600px] flex flex-col">
-          <h3 className="text-lg font-medium mb-4 flex items-center justify-between">
+        <div className="glass-panel p-8 h-[750px] flex flex-col relative overflow-hidden">
+          <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-[var(--color-elite-card)] to-transparent pointer-events-none z-10"></div>
+          
+          <h3 className="text-xl font-display font-medium mb-6 text-white flex items-center justify-between">
             Live Feed
-            <span className="flex items-center gap-2 text-xs text-green-500 bg-green-500/10 px-2 py-1 rounded-full border border-green-500/20">
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+            <span className="flex items-center gap-2 text-xs font-mono text-[var(--color-elite-accent)] bg-[var(--color-elite-accent)]/10 px-3 py-1.5 rounded-full border border-[var(--color-elite-accent)]/20 uppercase tracking-widest font-semibold">
+              <span className="w-2 h-2 rounded-full bg-[var(--color-elite-accent)] animate-pulse shadow-[0_0_10px_currentColor]"></span>
               Connected
             </span>
           </h3>
           
-          <div className="flex-1 overflow-y-auto space-y-3 pr-2 scrollbar-thin scrollbar-thumb-slate-700">
+          <div className="flex-1 overflow-y-auto space-y-4 pr-3 scrollbar-thin scrollbar-thumb-[var(--color-elite-border)] pb-12 relative z-0">
             {bids.length === 0 ? (
-              <p className="text-center text-slate-500 mt-10">No bids placed yet.</p>
+              <div className="text-center py-20">
+                <p className="text-[#a1a1aa] font-medium text-lg">No bids placed yet.</p>
+                <p className="text-[#52525b] text-sm mt-2">Be the first to bid on this item.</p>
+              </div>
             ) : (
               bids.map((bid, i) => (
                 <div 
                   key={bid.id || i} 
-                  className={`p-4 rounded-xl border transition-all ${
+                  className={`p-5 rounded-xl border transition-all duration-500 ${
                     i === 0 
-                      ? 'bg-amber-500/10 border-amber-500/30' 
-                      : 'bg-slate-950/50 border-slate-800'
-                  } animate-in slide-in-from-top-4 fade-in duration-300`}
+                      ? 'bg-[var(--color-elite-accent)]/15 border-[var(--color-elite-accent)]/40 shadow-[0_0_20px_rgba(16,185,129,0.1)]' 
+                      : (bid.bidder_id === user?.id || bid.bidder?.id === user?.id)
+                        ? 'bg-white/10 border-white/20 opacity-100'
+                        : 'bg-[#000000]/40 border-[var(--color-elite-border)] opacity-70'
+                  } animate-in slide-in-from-top-4 fade-in`}
                 >
                   <div className="flex justify-between items-end">
                     <div>
-                      <p className="text-xs text-slate-500 mb-1">
-                        Bidder #{bid.bidder_id} {bid.bidder_id === user?.id && <span className="text-amber-500">(You)</span>}
+                      <p className="text-[11px] text-[#a1a1aa] uppercase tracking-widest font-semibold mb-1.5">
+                        {bid.username || bid.bidder?.username || `Bidder #${bid.bidder_id || bid.bidder?.id}`} {(bid.bidder_id === user?.id || bid.bidder?.id === user?.id) && <span className="text-[var(--color-elite-accent)] ml-1">(You)</span>}
                       </p>
-                      <p className={`font-mono font-bold ${i === 0 ? 'text-amber-500 text-xl' : 'text-slate-300 text-lg'}`}>
+                      <p className={`font-mono tracking-tight ${i === 0 ? 'text-[var(--color-elite-accent)] font-bold text-xl' : 'text-[#e4e4e7] font-medium text-lg'}`}>
                         ${parseFloat(bid.value).toFixed(2)}
                       </p>
                     </div>
-                    <p className="text-xs text-slate-600 font-mono">
+                    <p className="text-[11px] text-[#a1a1aa] font-mono tracking-wider">
                       {new Date(bid.created_at).toLocaleTimeString()}
                     </p>
                   </div>
