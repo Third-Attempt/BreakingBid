@@ -1,6 +1,7 @@
 from typing import Annotated
 from fastapi import  APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 from database import get_session
 from models import Item, Bid
 from schema import ItemCreate, ItemResponse
@@ -12,8 +13,20 @@ router = APIRouter()
 SessionDep = Annotated[Session, Depends(get_session)]
 
 @router.get("/", response_model=list[ItemResponse])
-def get_all_items(session: SessionDep, page: int = 1):
-    items = session.query(Item).offset((page-1)*10).limit(10).all()
+def get_all_items(session: SessionDep, page: int = 1, search : str = "", status: int = 0):
+    now = datetime.now(timezone.utc)
+    # Ongoing
+    if status==0:
+        items = session.query(Item).where(Item.name.ilike(f"%{search}%"), Item.start_time<now, Item.end_time>now).order_by(Item.id.desc()).offset((page-1)*10).limit(10).all()
+    # Upcoming
+    elif status==1:
+        items = session.query(Item).where(Item.name.ilike(f"%{search}%"), Item.start_time>now).order_by(Item.start_time).offset((page-1)*10).limit(10).all()
+    # Finished
+    elif status==2:
+        items = session.query(Item).where(Item.name.ilike(f"%{search}%"), Item.end_time<now).order_by(Item.end_time.desc()).offset((page-1)*10).limit(10).all()
+    # All time
+    else:
+        items = session.query(Item).where(Item.name.ilike(f"%{search}%")).order_by(Item.id.desc()).offset((page-1)*10).limit(10).all()
     response = []
     for item in items:
         highest_bid = session.query(Bid).where(Bid.item_id==item.id).order_by(Bid.value.desc()).first()
@@ -36,7 +49,10 @@ def get_item(item_id: int, session: SessionDep):
     response = ItemResponse.model_validate(item)
         
     if highest_bid and now > item.end_time:
-        response = ItemResponse(**response.model_dump(), winner=highest_bid.bidder, final_price=highest_bid.value) 
+        winner = {"id": highest_bid.bidder_id, "username": highest_bid.bidder.username}
+        response = ItemResponse.model_validate(item)
+        response.winner = winner
+        response.final_price = highest_bid.value
     return response
 
 @router.post("/", response_model=ItemResponse, status_code=201)
