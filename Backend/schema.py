@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
+from models import WalletCategory
 
 class ResModel(BaseModel):
     class Config:
@@ -17,6 +18,7 @@ class UserCreate(BaseModel):
     username: str
     email: str
     password: str
+    wallet: float
 
 class UserLogin(BaseModel):
     username: str
@@ -26,6 +28,8 @@ class UserResponse(ResModel):
     id: int
     username: str
     email: str
+    wallet: float
+    rolling_debt: float
 
 class ItemCreate(BaseModel):
     name: str
@@ -55,3 +59,11 @@ class BidResponse(ResModel):
     item: ItemData
     bidder: UserData
     created_at: datetime
+
+class WalletResponse(ResModel):
+    from_id: int
+    to_id: int
+    item_id: int
+    amount: float 
+    category: WalletCategory
+    time: datetime

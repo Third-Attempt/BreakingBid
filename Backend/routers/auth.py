@@ -3,8 +3,9 @@ from fastapi import  APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from database import get_session
-from models import User
-from schema import UserCreate, UserLogin, UserResponse
+from models import User, Transaction, WalletCategory
+from schema import UserCreate, UserLogin, UserResponse, WalletUpdate
+from datetime import datetime, timezone
 from security import create_token
 import bcrypt
 
@@ -12,12 +13,26 @@ router = APIRouter()
 
 SessionDep = Annotated[Session, Depends(get_session)]
 
+def updateWallet(from_id: int, to_id: int, item_id: int, amount: float, time: datetime):
+    transaction = Transaction()
+    transaction.from_id = from_id
+    transaction.to_id = to_id
+    transaction.item_id = item_id
+    transaction.amount = amount
+    transaction.category = WalletCategory.INITIAL
+    transaction.time = time
+    return transaction
+
 @router.post("/register", response_model=UserResponse, status_code=201)
 def create_user(user_data: UserCreate, session: SessionDep):
     password_hash = bcrypt.hashpw(user_data.password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
     user = User(**user_data.model_dump(exclude={"password"}), password_hash=password_hash)
-    try:
+    now = datetime.now(timezone.utc)
+    try:    
         session.add(user)
+        session.flush()
+        transaction = updateWallet(67, user.id, None, 10000, now)
+        session.add(transaction)
         session.commit()
         session.refresh(user)
     except IntegrityError:

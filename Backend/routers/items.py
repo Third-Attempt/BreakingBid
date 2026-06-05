@@ -13,7 +13,7 @@ router = APIRouter()
 SessionDep = Annotated[Session, Depends(get_session)]
 
 @router.get("/", response_model=list[ItemResponse])
-def get_all_items(session: SessionDep, page: int = 1, search : str = "", status: int = 0, sort: bool = 0):
+def get_all_items(user: CurrentUser, session: SessionDep, page: int = 1, search : str = "", status: int = 0, sort: bool = 0):
     now = datetime.now(timezone.utc)
     query = session.query(Item, (func.coalesce(func.max(Bid.value), Item.base_price)).label("current_price")).outerjoin(Bid, Bid.item_id==Item.id).group_by(Item.id)
     query = query.where(Item.name.ilike(f"%{search}%"))
@@ -42,7 +42,7 @@ def get_all_items(session: SessionDep, page: int = 1, search : str = "", status:
     return response
 
 @router.get("/{item_id}", response_model=ItemResponse)
-def get_item(item_id: int, session: SessionDep):
+def get_item(user: CurrentUser, item_id: int, session: SessionDep):
     item = session.get(Item, item_id)
     if not item:
         raise HTTPException(status_code=404, detail="Item Not Found")

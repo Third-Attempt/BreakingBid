@@ -2,7 +2,7 @@ from typing import Annotated
 from fastapi import  APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, BackgroundTasks
 from sqlalchemy.orm import Session
 from database import get_session
-from models import Bid, Item
+from models import Bid, Item, User
 from schema import BidCreate, BidResponse
 from datetime import datetime, timezone
 from security import CurrentUser, verify_token
@@ -14,12 +14,12 @@ router = APIRouter()
 SessionDep = Annotated[Session, Depends(get_session)]
 
 @router.get("/", response_model=list[BidResponse])
-def get_bids(item_id: int, session: SessionDep, page: int = 1):
+def get_bids(user: CurrentUser, item_id: int, session: SessionDep, page: int = 1):
     bids = session.query(Bid).where(Bid.item_id==item_id).offset((page-1)*10).limit(10).all()
     return bids
 
 @router.get("/{bid_id}", response_model=BidResponse)
-def get_bid(item_id: int, bid_id: int, session: SessionDep):
+def get_bid(user: CurrentUser, item_id: int, bid_id: int, session: SessionDep):
     bid = session.get(Bid, bid_id)
     if not bid or item_id != bid.item_id:
         raise HTTPException(status_code=404, detail="Bid Not Found")
@@ -34,7 +34,10 @@ def create_bid(bidder: CurrentUser, item_id: int, data: BidCreate, session: Sess
     bids = Bid(**data.model_dump(), bidder_id=bidder.id, item_id=item_id)
     now = datetime.now(timezone.utc)
     highest_bid = session.query(Bid).where(Bid.item_id==item_id).order_by(Bid.value.desc()).first()
+    current_bidder = session.query(User).where(User.id==bidder.id).first()
+
     if highest_bid:
+        highest_bidder = session.query(User).where(User.id==highest_bid.bidder_id).first()
         delta = ceil(highest_bid.value*0.0033)
     else:
         delta = ceil(item.base_price*0.0033)
@@ -47,6 +50,13 @@ def create_bid(bidder: CurrentUser, item_id: int, data: BidCreate, session: Sess
         raise HTTPException(status_code=400, detail=f"Base Price is {item.base_price} and next bid must exceed {item.base_price + delta}")
     if highest_bid and bids.value <= (highest_bid.value + delta):
         raise HTTPException(status_code=400, detail=f"highest bid is {highest_bid.value} and bid must exceed {highest_bid.value + delta}")
+
+    min_balance = 10
+    current_bidder.rolling_debt += bids.value
+    if highest_bid:
+        highest_bidder.rolling_debt -= highest_bid.value
+    if (current_bidder.rolling_debt + min_balance > current_bidder.wallet):
+        raise HTTPException(status_code=400, detail="Needs to keep a minimum balance of Rs.10")
 
     session.add(bids)
     session.commit()
@@ -77,6 +87,7 @@ def create_bid(bidder: CurrentUser, item_id: int, data: BidCreate, session: Sess
     if highest_bid and highest_bid.bidder_id!=bidder.id:
         last_bid_user_id = highest_bid.bidder_id
         bg_tasks.add_task(manager.notify_outbid, last_bid_user_id, item_id, notify_data)
+    
     bg_tasks.add_task(manager.broadcast, item_id, broadcast_data)
 
     return bids
