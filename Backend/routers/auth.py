@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from database import get_session
 from models import User, Transaction, WalletCategory
-from schema import UserCreate, UserLogin, UserResponse, WalletUpdate
+from schema import UserCreate, UserLogin, UserResponse
 from datetime import datetime, timezone
 from security import create_token
 import bcrypt
