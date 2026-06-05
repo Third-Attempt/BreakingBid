@@ -2,6 +2,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, DateTime, ForeignKey, func, Enum
 from database import Base
 from datetime import datetime
+from typing import Optional
 import enum
 
 class WalletCategory(str, enum.Enum):
@@ -69,9 +70,9 @@ class Transaction(Base):
     category: Mapped[WalletCategory] = mapped_column(Enum(WalletCategory))
     time: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     
-    from_user: Mapped["User" | None] = relationship(back_populates="debits", foreign_keys="from_id")
+    from_user: Mapped[Optional["User"]] = relationship(back_populates="debits", foreign_keys="from_id")
     to_user: Mapped["User"] = relationship(back_populates="credits", foreign_keys="to_id")
-    related_item: Mapped["Item" | None] = relationship(back_populates="payments")
+    related_item: Mapped[Optional["Item"]] = relationship(back_populates="payments")
 
 
     
