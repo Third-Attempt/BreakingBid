@@ -15,6 +15,10 @@ def get_users(user: CurrentUser, session: SessionDep, page: int = 1):
     users = session.query(User).offset((page-1)*10).limit(10).all()
     return users
 
+@router.get("/me", response_model=UserResponse)
+def get_me(current_user: CurrentUser):
+    return current_user
+
 @router.get("/{user_id}", response_model=UserResponse)
 def get_user(current_user: CurrentUser, user_id: int, session: SessionDep):
     user = session.get(User, user_id)

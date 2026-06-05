@@ -13,7 +13,7 @@ router = APIRouter()
 
 SessionDep = Annotated[Session, Depends(get_session)]
 
-def updateWallet(from_id: int, to_id: int, item_id: int, amount: float, time: datetime):
+def updateWallet(from_id: int | None, to_id: int, item_id: int | None, amount: float, time: datetime):
     transaction = Transaction()
     transaction.from_id = from_id
     transaction.to_id = to_id
@@ -31,7 +31,7 @@ def create_user(user_data: UserCreate, session: SessionDep):
     try:    
         session.add(user)
         session.flush()
-        transaction = updateWallet(67, user.id, None, 10000, now)
+        transaction = updateWallet(1, user.id, None, 10000, now)
         session.add(transaction)
         session.commit()
         session.refresh(user)

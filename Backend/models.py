@@ -23,8 +23,8 @@ class User(Base):
 
     items: Mapped[list["Item"]] = relationship(back_populates="seller")
     bids: Mapped[list["Bid"]] = relationship(back_populates="bidder")
-    debits: Mapped[list["Transaction"]] = relationship(back_populates="from_user", foreign_keys="transactions.from_id")
-    credits: Mapped[list["Transaction"]] = relationship(back_populates="to_user", foreign_keys="transactions.to_id")
+    debits: Mapped[list["Transaction"]] = relationship(back_populates="from_user", foreign_keys="Transaction.from_id")
+    credits: Mapped[list["Transaction"]] = relationship(back_populates="to_user", foreign_keys="Transaction.to_id")
 
 
 class Item(Base):
@@ -65,13 +65,13 @@ class Transaction(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     from_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"))
     to_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
-    item_id: Mapped[int] = mapped_column(ForeignKey("items.id"))
+    item_id: Mapped[int | None] = mapped_column(ForeignKey("items.id"))
     amount: Mapped[float]
     category: Mapped[WalletCategory] = mapped_column(Enum(WalletCategory))
     time: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     
-    from_user: Mapped[Optional["User"]] = relationship(back_populates="debits", foreign_keys="from_id")
-    to_user: Mapped["User"] = relationship(back_populates="credits", foreign_keys="to_id")
+    from_user: Mapped[Optional["User"]] = relationship(back_populates="debits", foreign_keys="Transaction.from_id")
+    to_user: Mapped["User"] = relationship(back_populates="credits", foreign_keys="Transaction.to_id")
     related_item: Mapped[Optional["Item"]] = relationship(back_populates="payments")
 
 

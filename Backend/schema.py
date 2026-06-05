@@ -18,7 +18,6 @@ class UserCreate(BaseModel):
     username: str
     email: str
     password: str
-    wallet: float
 
 class UserLogin(BaseModel):
     username: str
@@ -61,9 +60,9 @@ class BidResponse(ResModel):
     created_at: datetime
 
 class WalletResponse(ResModel):
-    from_id: int
+    from_id: int | None = None
     to_id: int
-    item_id: int
+    item_id: int | None = None
     amount: float 
     category: WalletCategory
     time: datetime
