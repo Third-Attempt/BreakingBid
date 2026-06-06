@@ -71,9 +71,9 @@ const AuctionCard = ({ item, refCallback }) => {
         <div>
           <p className="text-[11px] text-[#a1a1aa] uppercase tracking-widest font-semibold mb-1.5 flex items-center gap-1.5">
             <TrendingUp size={12} className={timeInfo.isEnded ? "text-zinc-500" : "text-[var(--color-elite-accent)]"} /> 
-            {timeInfo.isEnded ? (item.winner ? "Winning Bid" : "Unsold") : "Current Bid"}
+            {timeInfo.isEnded ? (item.winner_id ? "Winning Bid" : "Unsold") : "Current Bid"}
           </p>
-          <p className={`font-mono text-2xl font-medium tracking-tight ${timeInfo.isEnded && !item.winner ? 'text-zinc-500' : 'text-white'}`}>
+          <p className={`font-mono text-2xl font-medium tracking-tight ${timeInfo.isEnded && !item.winner_id ? 'text-zinc-500' : 'text-white'}`}>
             ${Number(item.current_price ?? item.base_price).toFixed(2)}
           </p>
         </div>
@@ -254,38 +254,20 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen text-[#f4f4f5] p-8 font-sans">
-      {/* Header */}
-      <header className="max-w-7xl mx-auto flex justify-between items-center mb-12 border-b border-[var(--color-elite-border)] pb-6">
-        <div>
-          <h1 className="text-4xl font-display font-light tracking-wider text-white">
-            Breaking<span className="font-semibold text-[var(--color-elite-accent)]">Bid</span>
-          </h1>
-          <p className="text-[#a1a1aa] text-sm mt-1">Welcome back, <span className="text-white font-medium">{user?.username}</span></p>
-        </div>
-        <div className="flex gap-4">
-          <button 
-            onClick={openModal}
-            className="flex items-center gap-2 bg-[var(--color-elite-accent)]/10 text-[var(--color-elite-accent)] px-6 py-2.5 rounded-xl border border-[var(--color-elite-accent)]/30 hover:bg-[var(--color-elite-accent)] hover:text-black transition-all duration-300 shadow-[0_0_20px_rgba(16,185,129,0.15)] font-medium"
-          >
-            <Plus size={18} /> New Auction
-          </button>
-          <button 
-            onClick={handleLogout}
-            className="flex items-center gap-2 text-[#a1a1aa] hover:text-white transition-colors duration-300 px-3 font-medium"
-          >
-            <LogOut size={18} /> Logout
-          </button>
-        </div>
-      </header>
-
+    <div className="w-full">
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
-          <div className="flex items-center gap-6">
+          <div className="flex flex-wrap items-center gap-4 md:gap-6">
             <h2 className="text-2xl font-display font-medium flex items-center gap-3 text-white">
               <Gavel className="text-[var(--color-elite-accent)]" size={24} /> Auctions
             </h2>
+            <button 
+              onClick={openModal}
+              className="flex items-center gap-2 bg-[var(--color-elite-accent)]/10 text-[var(--color-elite-accent)] px-4 py-2 rounded-xl border border-[var(--color-elite-accent)]/30 hover:bg-[var(--color-elite-accent)] hover:text-black transition-all duration-300 font-medium text-sm shadow-[0_0_15px_rgba(16,185,129,0.1)]"
+            >
+              <Plus size={16} /> New
+            </button>
             
             <div className="relative">
               <select 
@@ -379,7 +361,7 @@ export default function Dashboard() {
             ))}
           </div>
         )}
-      </main>
+      </div>
 
       {/* Enhanced Create Modal */}
       {showModal && (
@@ -440,7 +422,7 @@ export default function Dashboard() {
                   </label>
                   <input
                     type="datetime-local"
-                    className="w-full bg-[#000000]/40 border border-[var(--color-elite-border)] rounded-xl px-4 py-3.5 text-white text-sm focus-within:border-[var(--color-elite-accent)] focus-within:ring-1 focus-within:ring-[var(--color-elite-accent)]/50 transition-all font-medium"
+                    className="w-full bg-[#000000]/40 border border-[var(--color-elite-border)] rounded-xl px-4 py-3.5 text-white text-sm focus-within:border-[var(--color-elite-accent)] focus-within:ring-1 focus-within:ring-[var(--color-elite-accent)]/50 transition-all font-medium [color-scheme:dark]"
                     value={newItem.start_time}
                     onChange={handleStartChange}
                     required
@@ -452,7 +434,7 @@ export default function Dashboard() {
                   </label>
                   <input
                     type="datetime-local"
-                    className="w-full bg-[#000000]/40 border border-[var(--color-elite-border)] rounded-xl px-4 py-3.5 text-white text-sm focus-within:border-[var(--color-elite-accent)] focus-within:ring-1 focus-within:ring-[var(--color-elite-accent)]/50 transition-all font-medium"
+                    className="w-full bg-[#000000]/40 border border-[var(--color-elite-border)] rounded-xl px-4 py-3.5 text-white text-sm focus-within:border-[var(--color-elite-accent)] focus-within:ring-1 focus-within:ring-[var(--color-elite-accent)]/50 transition-all font-medium [color-scheme:dark]"
                     value={newItem.end_time}
                     onChange={(e) => setNewItem(prev => ({...prev, end_time: e.target.value}))}
                     required

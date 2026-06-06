@@ -63,7 +63,9 @@ export default function Auth() {
         setIsLogin(true);
       }
     } catch (err) {
-      toast.error(err.response?.data?.detail || "An error occurred");
+      const detail = err.response?.data?.detail;
+      const errorMessage = typeof detail === 'string' ? detail : (Array.isArray(detail) ? detail[0].msg : "An error occurred");
+      toast.error(errorMessage);
     }
   };
 

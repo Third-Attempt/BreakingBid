@@ -5,6 +5,10 @@ import { useContext } from 'react';
 import Auth from './pages/Auth';
 import Dashboard from './pages/Dashboard';
 import AuctionRoom from './pages/AuctionRoom';
+import Layout from './components/Layout';
+import Profile from './pages/Profile';
+import Users from './pages/Users';
+import UserProfile from './pages/UserProfile';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -33,14 +37,15 @@ function App() {
           <Route path="/auth" element={<Auth />} />
           <Route path="/" element={
             <ProtectedRoute>
-              <Navigate to="/dashboard" />
+              <Layout />
             </ProtectedRoute>
-          } />
-          <Route path="/dashboard" element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          } />
+          }>
+            <Route index element={<Navigate to="/dashboard" />} />
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="profile" element={<Profile />} />
+            <Route path="users" element={<Users />} />
+            <Route path="users/:id" element={<UserProfile />} />
+          </Route>
           <Route path="/item/:id" element={
             <ProtectedRoute>
               <AuctionRoom />

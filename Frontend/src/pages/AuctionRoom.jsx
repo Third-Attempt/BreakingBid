@@ -235,7 +235,7 @@ export default function AuctionRoom() {
                 <p className="text-xs text-[var(--color-elite-accent)] uppercase tracking-widest font-semibold mb-2 flex items-center gap-2">
                   <TrendingUp size={16} /> Current Highest Bid
                 </p>
-                <p className="text-4xl font-mono font-bold text-[var(--color-elite-accent)] tracking-tight">${highestBid}</p>
+                <p className="text-4xl font-mono font-bold text-[var(--color-elite-accent)] tracking-tight">${Number(highestBid).toFixed(2)}</p>
               </div>
             </div>
           </div>
