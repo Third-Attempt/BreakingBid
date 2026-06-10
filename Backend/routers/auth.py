@@ -31,6 +31,7 @@ def create_user(user_data: UserCreate, session: SessionDep):
     try:    
         session.add(user)
         session.flush()
+        user.wallet = 10000
         transaction = updateWallet(1, user.id, None, 10000, now)
         session.add(transaction)
         session.commit()

@@ -44,12 +44,11 @@ async def sync_wallets():
                     seller.wallet += price
                     transaction = updateWallet(buyer.id, seller.id, item.id, price, now)
                     session.add(transaction)
-                    session.refresh()   
                     item.winner_id = id;
                     item.final_price = price;
                 item.payment_updated = 1
 
-            session.commit()
+            session.commit() 
             
         except:
             session.rollback()
